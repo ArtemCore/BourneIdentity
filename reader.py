@@ -16,9 +16,7 @@ def read_file_to_df(file_path: str, *args, **kwargs) -> pd.DataFrame:
         "csv",
         "json",
     ]:
-        raise NotImplementedError(
-            f"extension {file_extension} is not supported at the moment"
-        )
+        raise NotImplementedError(f"extension {file_extension} is not supported at the moment")
     if file_extension == "csv":
         kwargs["skipinitialspace"] = True
     if file_extension == "json":  # assume we always have jsonl
