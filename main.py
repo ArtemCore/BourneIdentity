@@ -11,26 +11,31 @@ CURRENT_PATH = os.getcwd()
 CHUNK_SIZE = 2  # number of rows to read
 
 
-def howTo():
+def how_to():
+    """function to show help text"""
     print(
         "How to use: python main.py <input_file.csv> <input_file.csv> <input_file.json> ..."
     )
 
 
-def run(args_to_process: List[str]):
+def run(args_to_process: List[str]) -> None:
+    """function to parse args and process files
+    """
     if args_to_process[0] in ["-h", "--help"]:
-        return howTo()
+        return how_to()
     data_frames_list: List[pd.DataFrame] = []
     for file in args_to_process:
         file_path: str = f"{CURRENT_PATH}/{file}"
         df: pd.DataFrame = read_file_to_df(file_path, chunksize=CHUNK_SIZE)
         data_frames_list.append(df)
-    result: List[str] = process_df(data_frames_list)
-    for line in result:
-        print(line)
+    if result := process_df(data_frames_list):
+        for line in result:
+            print(line)
+        print_jb()
 
 
 def print_jb():
+    """function to print Jason Bourne meme"""
     with open(f"{CURRENT_PATH}/jb.txt", "r") as jb:
         jb_lines_list = jb.readlines()
     for line in jb_lines_list:
@@ -38,6 +43,7 @@ def print_jb():
 
 
 def process_df(data_frames_list: List[pd.DataFrame]) -> List[str]:
+    """function to process list of pandas dataframes and search by params"""
     # concat all dataframes in one
     concatenated_df: pd.DataFrame = pd.concat(data_frames_list).replace({np.nan: None})
     search_params: Dict[str, Set] = {"Full name": {"Jason Bourne",}}
