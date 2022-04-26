@@ -1,8 +1,6 @@
 import os
 import sys
-from collections import defaultdict
-from typing import DefaultDict, Dict, List
-from typing import Set
+from typing import Any, Dict, List, Set
 
 import numpy as np
 import pandas as pd
@@ -12,15 +10,9 @@ from reader import read_file_to_df
 
 currentPath = os.getcwd()
 
-# pandas print options
-pd.set_option("display.max_columns", None)  # or 1000
-pd.set_option("display.max_rows", None)  # or 1000
-pd.set_option("display.max_colwidth", None)
-
-
 def howTo():
     print(
-        "How to use: python main.py <input_file.csv> + <input_file.csv> + <input_file.csv> ..."
+        "How to use: python main.py <input_file.csv> <input_file.csv> <input_file.json> ..."
     )
 
 
@@ -30,7 +22,7 @@ def run(args_to_process: List[str]):
     data_frames_list: List[DataFrame] = []
     for file in args_to_process:
         file_path: str = f"{currentPath}/{file}"
-        df: DataFrame = read_file_to_df(file_path, skipinitialspace=True)
+        df: DataFrame = read_file_to_df(file_path)
         data_frames_list.append(df)
     should_print_jb: bool = process_df(data_frames_list)
     if should_print_jb:
@@ -51,34 +43,41 @@ def process_df(data_frames_list: List[DataFrame]) -> bool:
     concatinated_df: DataFrame = pd.concat(data_frames_list).replace(
         {np.nan: None}
     )
-    # replace
     search_params: Dict[str, Set] = {"Full name": {"Jason Bourne",}}
     exclude_columns: List[str] = ["Time", "is_bourne", "file_name"]
     used_params: Dict[str, Set] = dict()
 
     while search_params:
         for column, values in search_params.items():
+            # fill in a new column `is_bourne` in case if we have a match with values from search_params
             concatinated_df.loc[
                 concatinated_df[column].isin(values), "is_bourne"
             ] = True
+            # update used_params dict to skip searching by already used values
             used_params[column] = used_params.get(column, set()).union(values)
+        # replace NaN with False
         concatinated_df.is_bourne = concatinated_df.is_bourne.fillna(
             False
         )
-
+        # clear dict to restart cycle
         search_params.clear()
-        new_search_params = concatinated_df.loc[
+        # create new search dict {"<column_name>": ["<search_values>", ...]}
+        new_search_params: Dict[str, Any] = concatinated_df.loc[
             concatinated_df.is_bourne
         ].to_dict("list")
         for column, values in new_search_params.items():
+            # skip excluded columns
             if column in exclude_columns:
                 continue
+            # get search set (values minus already used values with None filter)
             if search_set := set(
                 value
                 for value in set(values).difference(used_params.get(column, set()))
                 if value
             ):
+                # fill in search params with a new  key pairs (key -> column name, value -> column values)
                 search_params[column] = search_set
+    # ort dataframe by datetime
     sorted_dataframe = concatinated_df.sort_values(by="Time")
 
     for _, row in sorted_dataframe.loc[sorted_dataframe.is_bourne].iterrows():
