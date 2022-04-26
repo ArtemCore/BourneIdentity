@@ -9,6 +9,8 @@ from pandas import DataFrame
 from reader import read_file_to_df
 
 currentPath = os.getcwd()
+chunk_size = 2
+
 
 def howTo():
     print(
@@ -22,7 +24,7 @@ def run(args_to_process: List[str]):
     data_frames_list: List[DataFrame] = []
     for file in args_to_process:
         file_path: str = f"{currentPath}/{file}"
-        df: DataFrame = read_file_to_df(file_path)
+        df: DataFrame = read_file_to_df(file_path, chunksize=chunk_size)
         data_frames_list.append(df)
     should_print_jb: bool = process_df(data_frames_list)
     if should_print_jb:

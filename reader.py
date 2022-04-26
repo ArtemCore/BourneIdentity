@@ -1,5 +1,6 @@
 import os
 from typing import Callable
+from typing import List
 
 import pandas as pd
 
@@ -21,7 +22,13 @@ def read_file_to_df(file_path: str, *args, **kwargs) -> pd.DataFrame:
         if file_extension == "json":  # assume we always have jsonl
             kwargs["lines"] = True
         pd_file_reader: Callable = getattr(pd, f"read_{file_extension}")
-        data_frame: pd.DataFrame = pd_file_reader(file_path, *args, **kwargs)
+        if kwargs["chunksize"]:
+            df_list: List[pd.DataFrame] = []
+            for chunk in pd_file_reader(file_path, *args, **kwargs):
+                df_list.append(chunk)
+            data_frame: pd.DataFrame = pd.concat(df_list)
+        else:
+            data_frame: pd.DataFrame = pd_file_reader(file_path, *args, **kwargs)
         data_frame["file_name"] = filename
     else:
         raise NotImplementedError(
